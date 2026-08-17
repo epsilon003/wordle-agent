@@ -38,10 +38,24 @@ def post_result(payload: dict):
     data = jsonlib.dumps(payload).encode()
     req = urllib.request.Request(
         api_url, data=data, method="POST",
-        headers={"Content-Type": "application/json", "x-ingest-secret": secret},
+        headers={
+            "Content-Type": "application/json",
+            "x-ingest-secret": secret,
+            # Default urllib UA ("Python-urllib/3.x") gets flagged by
+            # Cloudflare's Bot Fight Mode / WAF and blocked with a 403
+            # before the request ever reaches the Pages Function. A normal
+            # UA is usually enough to get past that layer.
+            "User-Agent": "Mozilla/5.0 (compatible; wordle-agent-runner/1.0)",
+            "Accept": "application/json",
+        },
     )
-    with urllib.request.urlopen(req, timeout=15) as resp:
-        print(f"POST {api_url} -> {resp.status}")
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            print(f"POST {api_url} -> {resp.status}")
+    except urllib.error.HTTPError as e:
+        body = e.read().decode(errors="replace")
+        print(f"POST {api_url} -> {e.code} {e.reason}\nResponse body: {body}")
+        raise
 
 
 def run():
