@@ -1,0 +1,102 @@
+import { useEffect, useState } from "react";
+import { GuessesOverTime, GuessDistribution } from "./Charts";
+import type { WordleRun } from "./types";
+
+function computeStreak(runs: WordleRun[]): number {
+  const sorted = [...runs].sort((a, b) => b.puzzle_date.localeCompare(a.puzzle_date));
+  let streak = 0;
+  for (const r of sorted) {
+    if (r.solved) streak++;
+    else break;
+  }
+  return streak;
+}
+
+export default function App() {
+  const [runs, setRuns] = useState<WordleRun[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/runs")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.error) setError(data.error);
+        else setRuns(data.runs ?? []);
+      })
+      .catch((e) => setError(String(e)))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const total = runs.length;
+  const solved = runs.filter((r) => r.solved);
+  const winRate = total ? Math.round((solved.length / total) * 100) : 0;
+  const avgGuesses = solved.length
+    ? (solved.reduce((s, r) => s + r.num_attempts, 0) / solved.length).toFixed(2)
+    : "-";
+  const streak = computeStreak(runs);
+
+  return (
+    <main>
+      <h1>Wordle Agent Dashboard</h1>
+      <p className="subtitle">
+        {loading ? "Loading..." : error ? `Error loading data: ${error}` : `${total} recorded runs`}
+      </p>
+
+      <div className="stat-grid">
+        <div className="stat-card">
+          <div className="stat-value">{streak}</div>
+          <div className="stat-label">Current streak</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-value">{winRate}%</div>
+          <div className="stat-label">Win rate</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-value">{avgGuesses}</div>
+          <div className="stat-label">Avg. guesses (solved)</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-value">{total}</div>
+          <div className="stat-label">Total runs</div>
+        </div>
+      </div>
+
+      <div className="card">
+        <h2>Guesses over time</h2>
+        <GuessesOverTime runs={runs} />
+      </div>
+
+      <div className="card">
+        <h2>Guess distribution</h2>
+        <GuessDistribution runs={runs} />
+      </div>
+
+      <div className="card">
+        <h2>Recent runs</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th><th>Word</th><th>Attempts</th><th>Result</th><th>Duration</th>
+            </tr>
+          </thead>
+          <tbody>
+            {runs.slice(0, 30).map((r) => (
+              <tr key={r.id}>
+                <td>{r.puzzle_date}</td>
+                <td>{r.word ?? "—"}</td>
+                <td>{r.num_attempts}</td>
+                <td>
+                  <span className={`pill ${r.solved ? "pill-solved" : "pill-failed"}`}>
+                    {r.solved ? "Solved" : "Failed"}
+                  </span>
+                </td>
+                <td>{r.duration_seconds ? `${r.duration_seconds.toFixed(0)}s` : "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </main>
+  );
+}
