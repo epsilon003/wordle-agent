@@ -11,6 +11,7 @@ Usage (see .github/workflows/daily-solve.yml for the scheduled version):
     python runner_headless.py
 """
 import os
+import sys
 import time
 import datetime as dt
 import urllib.request
@@ -21,8 +22,8 @@ from playwright.sync_api import sync_playwright
 from solver import WordleSolver
 from player import (
     WORDLE_URL, TILE_SELECTOR,
-    dismiss_cookie_banner, start_game, type_guess, clear_current_row,
-    read_all_tile_states, is_invalid_word_toast, best_fallback,
+    dismiss_cookie_banner, dismiss_stray_popups, start_game, type_guess,
+    clear_current_row, read_all_tile_states, is_invalid_word_toast, best_fallback,
 )
 
 
@@ -59,7 +60,24 @@ def run():
 
         dismiss_cookie_banner(page)
         start_game(page)
-        page.wait_for_selector(TILE_SELECTOR, timeout=10000)
+
+        try:
+            page.wait_for_selector(TILE_SELECTOR, timeout=8000)
+        except Exception:
+            print("Board didn't appear yet; retrying popup dismissal...")
+            dismiss_stray_popups(page)
+            start_game(page)
+            try:
+                page.wait_for_selector(TILE_SELECTOR, timeout=10000)
+            except Exception:
+                page.screenshot(path="ci_debug_board_not_loaded.png")
+                print(
+                    "ERROR: game board never appeared after two attempts. "
+                    "Saved ci_debug_board_not_loaded.png."
+                )
+                browser.close()
+                sys.exit(1)
+
         time.sleep(0.5)
 
         for attempt in range(1, 7):

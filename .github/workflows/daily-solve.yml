@@ -34,5 +34,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: debug-screenshots
-          path: ci_debug_attempt_*.png
+          path: |
+            ci_debug_attempt_*.png
+            ci_debug_board_not_loaded.png
           if-no-files-found: ignore
