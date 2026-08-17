@@ -1,0 +1,10 @@
+.browser_profile/
+venv/
+/__pycache__
+ci_debug_attempt_*.png
+dashboard/.wrangler/
+dashboard/dist/
+dashboard/node_modules/
+debug_after_guess.png
+debug_attempt_*.png
+debug_before_type.png
