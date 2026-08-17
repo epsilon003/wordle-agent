@@ -82,18 +82,29 @@ def dismiss_stray_popups(page: Page):
         pass
 
 
+def wait_and_dismiss_popups(page: Page, duration: float = 6.0, interval: float = 1.0):
+    """Poll for stray popups over `duration` seconds rather than checking
+    once. The full-page interstitial ad in particular renders on its own
+    delay (observed ~3s after the Play click), so a single check right
+    after clicking is too early to catch it."""
+    elapsed = 0.0
+    while elapsed < duration:
+        dismiss_stray_popups(page)
+        time.sleep(interval)
+        elapsed += interval
+
+
 def start_game(page: Page):
     """Click Play, then close the how-to-play modal if it appears."""
     dismiss_stray_popups(page)  # a promo overlay can block the Play click itself
-    dismiss_stray_popups(page)
     try:
         page.get_by_role("button", name="Play", exact=True).click(timeout=5000)
     except Exception:
         pass  # maybe already past the landing screen
-    time.sleep(2)
 
-    dismiss_stray_popups(page)
-    dismiss_stray_popups(page)
+    # The interstitial ad shows up a few seconds after Play is clicked,
+    # not immediately - poll rather than check once.
+    wait_and_dismiss_popups(page, duration=6.0, interval=1.0)
 
     # "How to play" instructions modal - close it
     for sel in ['button[aria-label="Close"]', 'button[aria-label="Close dialog"]']:

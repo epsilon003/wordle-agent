@@ -22,7 +22,7 @@ from solver import WordleSolver
 from player import (
     WORDLE_URL, TILE_SELECTOR,
     dismiss_cookie_banner, start_game, type_guess, clear_current_row,
-    read_all_tile_states, is_invalid_word_toast, best_fallback,dismiss_stray_popups,
+    read_all_tile_states, is_invalid_word_toast, best_fallback,
 )
 
 
@@ -59,7 +59,6 @@ def run():
 
         dismiss_cookie_banner(page)
         start_game(page)
-        dismiss_stray_popups()
         page.wait_for_selector(TILE_SELECTOR, timeout=10000)
         time.sleep(0.5)
 
