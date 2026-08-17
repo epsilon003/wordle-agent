@@ -17,6 +17,9 @@ from solver import WordleSolver, best_guess
 WORDLE_URL = "https://www.nytimes.com/games/wordle/index.html"
 TILE_SELECTOR = 'div[data-testid="tile"]'
 
+DELAY_BETWEEN_ATTEMPTS = 1.5  # pause after reading feedback, before next guess
+DELAY_AFTER_SUCCESS = 5.0     # pause on the solved board before closing
+
 
 def dismiss_cookie_banner(page: Page):
     for name in ["Accept all", "Reject all"]:
@@ -30,13 +33,67 @@ def dismiss_cookie_banner(page: Page):
             pass
 
 
+def dismiss_stray_popups(page: Page):
+    """Best-effort close of ad/promo overlays that can slide in a couple
+    seconds after load (NYT shows these to non-subscribers). These aren't
+    just visual clutter - if one grabs keyboard focus, subsequent typed
+    guesses can silently go nowhere instead of into the tiles. Called
+    before every guess since they can reappear mid-game."""
+    # Full-page interstitial ad: exits via a "Continue to Wordle" link/
+    # button, not a close/X icon, so it needs its own check.
+    try:
+        cont = page.get_by_text(re.compile(r"continue to wordle", re.I))
+        if cont.first.is_visible(timeout=500):
+            cont.first.click(timeout=500)
+            time.sleep(0.5)
+    except Exception:
+        pass
+
+    try:
+        btn = page.get_by_role(
+            "button", name=re.compile(r"close|dismiss|no thanks|not now|got it", re.I)
+        )
+        if btn.first.is_visible(timeout=500):
+            btn.first.click(timeout=500)
+            time.sleep(0.2)
+    except Exception:
+        pass
+
+    for sel in [
+        '[aria-label*="close" i]',
+        '[aria-label*="dismiss" i]',
+        'button[class*="close" i]',
+        '[data-testid*="close" i]',
+    ]:
+        try:
+            loc = page.locator(sel).first
+            if loc.is_visible(timeout=400):
+                loc.click(timeout=400)
+                time.sleep(0.2)
+        except Exception:
+            pass
+
+    # Re-focus the page body (near the top-left, away from where these
+    # popups tend to sit) so keyboard events reliably reach the game
+    # rather than whatever the popup left focused.
+    try:
+        page.locator("body").click(position={"x": 5, "y": 5}, timeout=500)
+    except Exception:
+        pass
+
+
 def start_game(page: Page):
     """Click Play, then close the how-to-play modal if it appears."""
+    dismiss_stray_popups(page)  # a promo overlay can block the Play click itself
+    dismiss_stray_popups(page)
     try:
         page.get_by_role("button", name="Play", exact=True).click(timeout=5000)
     except Exception:
         pass  # maybe already past the landing screen
-    time.sleep(1)
+    time.sleep(2)
+
+    dismiss_stray_popups(page)
+    dismiss_stray_popups(page)
 
     # "How to play" instructions modal - close it
     for sel in ['button[aria-label="Close"]', 'button[aria-label="Close dialog"]']:
@@ -53,6 +110,7 @@ def start_game(page: Page):
 
 
 def type_guess(page: Page, word: str):
+    dismiss_stray_popups(page)
     for ch in word:
         page.keyboard.press(ch.upper())
         time.sleep(0.08)
@@ -98,8 +156,32 @@ def play(headless: bool = False):
         dismiss_cookie_banner(page)
         start_game(page)
 
-        page.wait_for_selector(TILE_SELECTOR, timeout=10000)
+        try:
+            page.wait_for_selector(TILE_SELECTOR, timeout=8000)
+        except Exception:
+            # Board still not up - most likely another popup grabbed focus
+            # or covered the Play button after our first dismissal pass.
+            # Try once more, then give a clear diagnostic instead of a
+            # raw traceback.
+            print("  Board didn't appear yet; retrying popup dismissal...")
+            dismiss_stray_popups(page)
+            start_game(page)
+            try:
+                page.wait_for_selector(TILE_SELECTOR, timeout=10000)
+            except Exception:
+                page.screenshot(path="debug_board_not_loaded.png")
+                print(
+                    "  ERROR: game board never appeared after two attempts.\n"
+                    "  Saved debug_board_not_loaded.png - open it to see what's "
+                    "on screen (likely an overlay dismiss_stray_popups doesn't "
+                    "recognize yet - if so, share the screenshot and we can add "
+                    "a selector for it)."
+                )
+                browser.close()
+                return
+
         time.sleep(0.5)
+        dismiss_stray_popups(page)
 
         for attempt in range(1, 7):
             guess = solver.next_guess()
@@ -137,12 +219,15 @@ def play(headless: bool = False):
 
             if solver.is_solved(pattern):
                 print(f"Solved in {attempt} guesses! Word was '{guess}'.")
+                time.sleep(DELAY_AFTER_SUCCESS)
                 break
 
             solver.update(guess, pattern)
             if not solver.candidates:
                 print("  No candidates left - word list mismatch with NYT's dictionary.")
                 break
+
+            time.sleep(DELAY_BETWEEN_ATTEMPTS)
         else:
             print("Did not solve within 6 guesses.")
 
