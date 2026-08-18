@@ -12,6 +12,24 @@ function computeStreak(runs: WordleRun[]): number {
   return streak;
 }
 
+// Calendar days since the agent last needed a human to step in. Uses the
+// most recent *failed* run as the reference point (a failed run is our
+// best proxy for "something needed fixing" - DOM break, timeout, etc.);
+// if there's never been a failure, counts from the very first recorded
+// run instead, so a brand-new project doesn't show an undefined/infinite
+// streak.
+function computeDaysSinceLastFailure(runs: WordleRun[]): number {
+  if (runs.length === 0) return 0;
+  const sorted = [...runs].sort((a, b) => b.puzzle_date.localeCompare(a.puzzle_date));
+  const lastFailure = sorted.find((r) => !r.solved);
+  const referenceDate = lastFailure ? lastFailure.puzzle_date : sorted[sorted.length - 1].puzzle_date;
+
+  const ref = new Date(referenceDate + "T00:00:00Z");
+  const now = new Date();
+  const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  return Math.max(0, Math.round((todayUTC.getTime() - ref.getTime()) / 86_400_000));
+}
+
 export default function App() {
   const [runs, setRuns] = useState<WordleRun[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +53,7 @@ export default function App() {
     ? (solved.reduce((s, r) => s + r.num_attempts, 0) / solved.length).toFixed(2)
     : "-";
   const streak = computeStreak(runs);
+  const daysSinceLastFailure = computeDaysSinceLastFailure(runs);
 
   return (
     <main>
@@ -59,6 +78,10 @@ export default function App() {
         <div className="stat-card">
           <div className="stat-value">{total}</div>
           <div className="stat-label">Total runs</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-value">{daysSinceLastFailure}</div>
+          <div className="stat-label">Days since last failure</div>
         </div>
       </div>
 
