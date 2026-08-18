@@ -27,6 +27,7 @@ jobs:
         env:
           WORDLE_API_URL: ${{ secrets.WORDLE_API_URL }}
           INGEST_SECRET: ${{ secrets.INGEST_SECRET }}
+          FAILURE_WEBHOOK_URL: ${{ secrets.FAILURE_WEBHOOK_URL }}
         run: python runner_headless.py
 
       - name: Upload debug screenshots on failure
