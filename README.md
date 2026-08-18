@@ -3,6 +3,7 @@
 An autonomous agent that solves the live NYT Wordle using an
 entropy-maximizing solver, with an optional hosted pipeline that runs it
 daily and tracks results on a dashboard.
+![playby](docs/playby.gif)
 
 **Status: working end-to-end**, both locally and in the hosted setup
 (daily GitHub Actions run → Cloudflare Pages API → Supabase → dashboard).
