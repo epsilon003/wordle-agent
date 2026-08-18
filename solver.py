@@ -118,3 +118,48 @@ class WordleSolver:
 
     def is_solved(self, pattern) -> bool:
         return tuple(pattern) == (2, 2, 2, 2, 2)
+
+
+def naive_frequency_guess(candidates):
+    """Baseline heuristic: score each candidate by summing, for each
+    letter it contains, how often that letter appears in that exact
+    position across the remaining candidates. No information-theoretic
+    reasoning at all - just "pick the word that looks most typical of
+    what's left." Always guesses from the candidate list itself (never
+    probes with an out-of-pool word)."""
+    if len(candidates) <= 2:
+        return candidates[0]
+
+    position_counts = [Counter(word[i] for word in candidates) for i in range(5)]
+
+    best_word, best_score = None, -1
+    for word in candidates:
+        score = sum(position_counts[i][ch] for i, ch in enumerate(word))
+        if score > best_score:
+            best_word, best_score = word, score
+    return best_word
+
+
+class NaiveFrequencySolver:
+    """Baseline for benchmarking against WordleSolver. Same opener, same
+    candidate-filtering, but picks each subsequent guess by raw
+    letter-position frequency instead of entropy - no lookahead, no
+    information theory. See simulate.py for the head-to-head comparison."""
+
+    def __init__(self):
+        self.allowed, self.possible = load_words()
+        self.candidates = list(self.possible)
+        self.guess_count = 0
+
+    def next_guess(self) -> str:
+        if self.guess_count == 0:
+            self.guess_count += 1
+            return OPENERS[0]
+        self.guess_count += 1
+        return naive_frequency_guess(self.candidates)
+
+    def update(self, guess: str, pattern) -> None:
+        self.candidates = filter_candidates(self.candidates, guess, tuple(pattern))
+
+    def is_solved(self, pattern) -> bool:
+        return tuple(pattern) == (2, 2, 2, 2, 2)
