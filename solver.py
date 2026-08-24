@@ -102,6 +102,8 @@ class WordleSolver:
         self.allowed, self.possible = load_words()
         self.candidates = list(self.possible)
         self.guess_count = 0
+        self.history = []          # [(guess, pattern), ...] - full game so far
+        self.used_fallback = False # True once we've had to widen beyond `possible`
 
     def next_guess(self) -> str:
         if self.guess_count == 0:
@@ -114,7 +116,22 @@ class WordleSolver:
 
     def update(self, guess: str, pattern) -> None:
         """Narrow candidates given the feedback pattern for `guess`."""
-        self.candidates = filter_candidates(self.candidates, guess, tuple(pattern))
+        pattern = tuple(pattern)
+        self.history.append((guess, pattern))
+        self.candidates = filter_candidates(self.candidates, guess, pattern)
+
+        if not self.candidates:
+            # The true answer isn't in `possible` at all - NYT has been
+            # known to pull answers from a wider word bank than the
+            # original ~2309-word curated list this solver is seeded
+            # with. Rather than give up, widen the search to the full
+            # ~13k-word allowed-guesses dictionary, re-applying every
+            # constraint seen so far.
+            self.used_fallback = True
+            fallback = list(self.allowed)
+            for g, p in self.history:
+                fallback = filter_candidates(fallback, g, p)
+            self.candidates = fallback
 
     def is_solved(self, pattern) -> bool:
         return tuple(pattern) == (2, 2, 2, 2, 2)
