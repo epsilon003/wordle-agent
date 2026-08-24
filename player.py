@@ -1,6 +1,5 @@
 """
 Automates playing the live NYT Wordle using the entropy solver.
-
 DOM structure confirmed via debug_dom.py against the real site (Aug 2026):
 plain React, no shadow DOM. Tiles are:
     <div data-testid="tile" data-state="empty|tbd|absent|present|correct"
@@ -234,6 +233,10 @@ def play(headless: bool = False):
                 break
 
             solver.update(guess, pattern)
+            if solver.used_fallback and not getattr(solver, "_fallback_logged", False):
+                print("  (true answer isn't in the curated possible-words list - "
+                      "widened search to the full allowed-words dictionary)")
+                solver._fallback_logged = True
             if not solver.candidates:
                 print("  No candidates left - word list mismatch with NYT's dictionary.")
                 break
@@ -244,7 +247,6 @@ def play(headless: bool = False):
 
         time.sleep(3)
         browser.close()
-
 
 if __name__ == "__main__":
     play(headless=False)
