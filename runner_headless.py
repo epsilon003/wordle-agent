@@ -2,13 +2,6 @@
 Headless, CI-friendly version of player.py. No login, no persistent
 profile (each GitHub Actions run is a fresh VM anyway) - just plays the
 day's word and POSTs the result to the dashboard's ingest API.
-
-Env vars required:
-    WORDLE_API_URL   e.g. https://your-app.vercel.app/api/runs
-    INGEST_SECRET    must match INGEST_SECRET set in your Vercel project
-
-Usage (see .github/workflows/daily-solve.yml for the scheduled version):
-    python runner_headless.py
 """
 import os
 import sys
@@ -168,6 +161,12 @@ def run():
                 break
 
             solver.update(guess, pattern)
+            if solver.used_fallback and len(guess_log) and not getattr(solver, "_fallback_logged", False):
+                print(
+                    "Note: true answer isn't in the curated possible_words.txt "
+                    "list - widened search to the full allowed_words.txt dictionary."
+                )
+                solver._fallback_logged = True
             if not solver.candidates:
                 post_failure_alert(
                     f"solver ran out of candidates mid-game after guessing "
