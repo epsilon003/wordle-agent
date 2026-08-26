@@ -1,3 +1,4 @@
+![Wordle Agent live stats](https://wordle-agent.pages.dev/api/stats-card.svg)
 # wordle-agent
 
 An autonomous agent that solves the live NYT Wordle using an
