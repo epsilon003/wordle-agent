@@ -57,10 +57,6 @@ want more time to watch each guess land.
 
 ## Results (benchmarked offline, no browser)
 
-```bash
-python simulate.py
-```
-
 60 random real Wordle answers, same sample for both solvers:
 
 | Solver | Win rate | Avg. guesses |
@@ -115,7 +111,7 @@ measurable in this sample.
   Discord incoming webhook) and `runner_headless.py` will post an alert
   the moment something breaks — DOM mismatch, unhandled exception, or a
   genuine 6-guess loss — instead of failing silently until the daily
-  dashboard update stops showing up. See `HOSTED_SETUP.md`.
+  dashboard update stops showing up.
 - **"Days since last failure"** is tracked on the dashboard as a rough
   measure of how long the pipeline has run unattended — a stand-in for
   "days since a human last had to intervene," computed from the most
