@@ -48,30 +48,30 @@ function renderCard(stats: {
   updated: string;
 }): string {
   const { streak, winRate, avgGuesses, daysAutonomous, updated } = stats;
-  return `<svg width="495" height="150" viewBox="0 0 495 150" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Roboto, sans-serif">
-  <rect x="0.5" y="0.5" width="494" height="149" rx="10" fill="#0f1115" stroke="#262a33"/>
-  <text x="20" y="30" font-size="14" font-weight="700" fill="#e7e9ea">Wordle Agent — Live Stats</text>
-  <text x="20" y="46" font-size="10.5" fill="#8b8f96">Autonomous NYT Wordle solver, updated daily</text>
+  return `<svg width="800" height="150" viewBox="0 0 800 150" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Roboto, sans-serif">
+  <rect x="0.5" y="0.5" width="799" height="149" rx="10" fill="#0f1115" stroke="#262a33"/>
+  <text x="24" y="32" font-size="15" font-weight="700" fill="#e7e9ea">Wordle Agent — Live Stats</text>
+  <text x="24" y="49" font-size="11.5" fill="#8b8f96">Autonomous NYT Wordle solver, updated daily</text>
   <g text-anchor="middle">
-    <text x="80" y="95" font-size="28" font-weight="700" fill="#4ade80">${streak}</text>
-    <text x="80" y="114" font-size="10.5" fill="#8b8f96">Day streak</text>
-    <text x="200" y="95" font-size="28" font-weight="700" fill="#4ade80">${escapeXml(winRate)}</text>
-    <text x="200" y="114" font-size="10.5" fill="#8b8f96">Win rate</text>
-    <text x="320" y="95" font-size="28" font-weight="700" fill="#4ade80">${escapeXml(avgGuesses)}</text>
-    <text x="320" y="114" font-size="10.5" fill="#8b8f96">Avg. guesses</text>
-    <text x="435" y="95" font-size="28" font-weight="700" fill="#4ade80">${daysAutonomous}</text>
-    <text x="435" y="114" font-size="10.5" fill="#8b8f96">Days autonomous</text>
+    <text x="140" y="98" font-size="30" font-weight="700" fill="#4ade80">${streak}</text>
+    <text x="140" y="118" font-size="11.5" fill="#8b8f96">Day streak</text>
+    <text x="330" y="98" font-size="30" font-weight="700" fill="#4ade80">${escapeXml(winRate)}</text>
+    <text x="330" y="118" font-size="11.5" fill="#8b8f96">Win rate</text>
+    <text x="520" y="98" font-size="30" font-weight="700" fill="#4ade80">${escapeXml(avgGuesses)}</text>
+    <text x="520" y="118" font-size="11.5" fill="#8b8f96">Avg. guesses</text>
+    <text x="710" y="98" font-size="30" font-weight="700" fill="#4ade80">${daysAutonomous}</text>
+    <text x="710" y="118" font-size="11.5" fill="#8b8f96">Days autonomous</text>
   </g>
-  <line x1="20" y1="130" x2="475" y2="130" stroke="#22252d" stroke-width="1"/>
-  <text x="475" y="143" font-size="9" fill="#5b5f68" text-anchor="end">Updated ${escapeXml(updated)}</text>
+  <line x1="24" y1="132" x2="776" y2="132" stroke="#22252d" stroke-width="1"/>
+  <text x="776" y="145" font-size="9.5" fill="#5b5f68" text-anchor="end">Updated ${escapeXml(updated)}</text>
 </svg>`;
 }
 
 function errorCard(message: string): string {
-  return `<svg width="495" height="150" viewBox="0 0 495 150" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Roboto, sans-serif">
-  <rect x="0.5" y="0.5" width="494" height="149" rx="10" fill="#0f1115" stroke="#262a33"/>
-  <text x="20" y="30" font-size="14" font-weight="700" fill="#e7e9ea">Wordle Agent — Live Stats</text>
-  <text x="20" y="75" font-size="12" fill="#f87171">${escapeXml(message)}</text>
+  return `<svg width="800" height="150" viewBox="0 0 800 150" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, Roboto, sans-serif">
+  <rect x="0.5" y="0.5" width="799" height="149" rx="10" fill="#0f1115" stroke="#262a33"/>
+  <text x="24" y="32" font-size="15" font-weight="700" fill="#e7e9ea">Wordle Agent — Live Stats</text>
+  <text x="24" y="78" font-size="13" fill="#f87171">${escapeXml(message)}</text>
 </svg>`;
 }
 
